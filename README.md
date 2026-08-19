@@ -49,9 +49,4 @@ src/
 └── main.tsx                      # Punto de entrada de React
 ```
 
-```
-
-Antes de iniciar, coloca tu logo en `src/assets/logo-bundikey.png`
-(instrucciones en `src/assets/LEEME_LOGO.txt`).
-
 
