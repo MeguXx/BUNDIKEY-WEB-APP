@@ -1,10 +1,10 @@
 # BundiKey Web — Panel de Mostrador
 
-Panel web para caja/mostrador de la pastelería BundiKey, construido en **React + TypeScript + Vite**,
-sincronizado en tiempo real con el mismo backend **Firebase (Auth + Firestore)** que usa la app móvil (APK).
+Panel web para caja/mostrador de la pastelería BundiKey, construido en **React + TypeScript + SQL SERVER**,
+sincronizado en tiempo real con el mismo backend.
 
 Este proyecto reemplaza la versión inicial (generada en un único `App.tsx` de ~1000 líneas) por una
-**arquitectura por capas**, replicando el mismo criterio de organización que ya se sustentó para el APK
+**arquitectura por capas**
 (`domain/`, `infrastructure/`, `presentation/`).
 
 ## 📁 Arquitectura
