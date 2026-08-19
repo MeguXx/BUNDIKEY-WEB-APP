@@ -22,12 +22,12 @@ export const OrderCard: React.FC<Props> = ({ item, deliveryState, onOpen, onMarc
           <strong style={{ fontSize: '16px', color: COLORS.chocolate }}>{title}</strong>
           <span style={{ fontSize: '12px', color: COLORS.moca, marginLeft: '6px' }}>({item.tipoAtencion.replace('_', ' ')})</span>
         </div>
-        {item.telefono && <span style={{ fontSize: '12px', color: COLORS.moca }}>📞 {item.telefono}</span>}
+        {item.telefono && <span style={{ fontSize: '12px', color: COLORS.moca }}>{item.telefono}</span>}
       </div>
 
       {isEnvio && item.direccionEntrega && (
-        <p style={{ margin: '6px 0 2px', fontSize: '13px', color: COLORS.azul, fontStyle: 'italic' }}>
-          📍 Destino: <strong>{item.distrito || item.direccionEntrega}</strong>
+        <p style={{ margin: '6px 0 2px', fontSize: '13px', color: COLORS.azul, fontWeight: 700 }}>
+          Destino: <strong>{item.distrito || item.direccionEntrega}</strong>
         </p>
       )}
 
@@ -44,10 +44,10 @@ export const OrderCard: React.FC<Props> = ({ item, deliveryState, onOpen, onMarc
       {isEnvio && deliveryState && (
         <div style={webStyles.etaBox}>
           {deliveryState.status === 'YENDO'
-            ? `⏱ Llegando en ${deliveryState.timeLeft} min`
+            ? `Llegando en ${deliveryState.timeLeft} min`
             : deliveryState.status === 'ENTREGANDO'
-            ? '📦 Entregando pedido...'
-            : `🔁 Retornando (${deliveryState.timeLeft} min)`}
+            ? 'Entregando pedido...'
+            : `Retornando (${deliveryState.timeLeft} min)`}
         </div>
       )}
 
@@ -76,7 +76,7 @@ export const OrderCard: React.FC<Props> = ({ item, deliveryState, onOpen, onMarc
             }}
             style={webStyles.trackChipBtn}
           >
-            📡 Rastreo GPS
+            Rastreo GPS
           </button>
         )}
       </div>

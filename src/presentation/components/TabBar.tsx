@@ -44,9 +44,9 @@ export const TabBar: React.FC<Props> = ({ activeTab, onChange, rol }) => {
         className="bk-tab"
         onClick={() => onChange('HISTORIAL')}
         title="Historial de Pedidos"
-        style={{ ...webStyles.historialTabBtn, ...(activeTab === 'HISTORIAL' ? webStyles.activeHistorialBtn : {}) }}
+        style={{ ...webStyles.historialTabBtn, ...(activeTab === 'HISTORIAL' ? webStyles.activeHistorialBtn : {}), fontWeight: 800 }}
       >
-        🕒 Historial
+        Historial
       </button>
     </div>
   );

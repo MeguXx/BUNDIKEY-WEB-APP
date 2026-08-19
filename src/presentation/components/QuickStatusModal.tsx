@@ -13,7 +13,7 @@ const softColors = {
   gris:     { bg: '#F5F5F5', border: '#E0E0E0', text: '#9E9E9E' }, 
 };
 
-export function QuickStatusModal({ pedido, onClose, onUpdateState, onOpenEdit }: any) {
+export function QuickStatusModal({ pedido, onClose, onUpdateState, onOpenEdit, onDelete }: any) {
   const { dbUser } = useAuth();
   const [comprobante, setComprobante] = useState<'NONE'|'BOLETA'|'FACTURA'>('NONE');
   const [docIdentidad, setDocIdentidad] = useState('');
@@ -32,6 +32,16 @@ export function QuickStatusModal({ pedido, onClose, onUpdateState, onOpenEdit }:
 
   const confirmarVenta = () => handleState('ENTREGADO');
   const imprimirTicket = () => window.print();
+
+  const handleCancelar = () => {
+    if (window.confirm('¿Seguro que deseas CANCELAR este pedido? Esta acción no se puede deshacer.')) {
+      handleState('CANCELADO');
+    }
+  };
+
+  const handleForzar = (estado: EstadoPedido, mensaje: string) => {
+    if (window.confirm(mensaje)) handleState(estado);
+  };
 
   const isEnvio = pedido.tipoAtencion === 'DELIVERY' || pedido.tipoAtencion === 'EVENTO';
   const rol = dbUser?.rol;
@@ -53,61 +63,105 @@ export function QuickStatusModal({ pedido, onClose, onUpdateState, onOpenEdit }:
   );
 
   return (
-    <div style={webStyles.modalOverlay}>
+    <div id="qsm-overlay" style={webStyles.modalOverlay}>
       <style>{`
         @media print {
+          @page { margin: 10mm; }
           body * { visibility: hidden; }
           #ticket-area, #ticket-area * { visibility: visible; }
-          #ticket-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; box-shadow: none; border: none; }
+          /* Estas tres capas envuelven el ticket con position:fixed + blur + centrado
+             para la pantalla. Sin resetearlas, la hoja de impresión sale casi en blanco
+             porque el ticket hereda ese posicionamiento "flotante". Para imprimir las
+             volvemos estáticas y el ticket pasa a fluir normal desde la esquina de la hoja. */
+          #qsm-overlay { position: static !important; background: none !important; backdrop-filter: none !important; padding: 0 !important; display: block !important; }
+          #qsm-content { position: static !important; max-width: none !important; max-height: none !important; overflow: visible !important; box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; background: none !important; }
+          #ticket-area { position: static !important; width: 320px !important; margin: 0 auto !important; box-shadow: none !important; border: none !important; }
           .no-print { display: none !important; }
         }
       `}</style>
       
-      <div style={{ ...webStyles.modalContent, position: 'relative', maxWidth: showTicket ? '400px' : '360px', textAlign: 'center', padding: showTicket ? '20px' : '30px 25px' }}>
+      <div id="qsm-content" style={{ ...webStyles.modalContent, position: 'relative', maxWidth: showTicket ? '400px' : '360px', textAlign: 'center', padding: showTicket ? '20px' : '30px 25px' }}>
         {!showTicket && <button onClick={onClose} style={webStyles.closeXBtn}>✕</button>}
         
         {comprobante === 'NONE' ? (
           <>
-            <h3 style={{ color: COLORS.chocolate, margin: '5px 0 5px 0', fontSize: '24px' }}>
+            <h3 style={{ color: COLORS.chocolate, margin: '5px 0 5px 0', fontSize: '24px', fontWeight: 800 }}>
               {pedido.tipoAtencion === 'MESA' ? `Mesa ${pedido.numeroMesa}` : pedido.clienteNombre || 'Cliente'}
             </h3>
-            <p style={{ color: COLORS.moca, marginBottom: '25px', fontWeight: 'bold', fontSize: '14px' }}>{pedido.tipoAtencion.replace('_', ' ')}</p>
+            <p style={{ color: COLORS.moca, marginBottom: isHistorial ? '18px' : '25px', fontWeight: 'bold', fontSize: '14px' }}>{pedido.tipoAtencion.replace('_', ' ')}</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-              {rol === 'SALA' && !isHistorial && (
-                <>
-                  <SquareButton colorTheme={softColors.caramelo} subtitle="Alertar a Cocina" title="PENDIENTE" onClick={() => handleState('PENDIENTE')} />
-                  <SquareButton colorTheme={softColors.verde} subtitle={isListo ? "Finalizar y" : "Esperando a Cocina"} title="ENTREGAR" disabled={!isListo} onClick={() => setComprobante('BOLETA')} />
-                </>
-              )}
-              {rol === 'COCINA' && !isHistorial && (
-                <>
-                  <SquareButton colorTheme={softColors.fresa} subtitle="Marcar" title="EN PREPARACIÓN" onClick={() => handleState('EN_PREPARACION')} />
-                  <SquareButton colorTheme={softColors.verde} subtitle="Marcar como" title="LISTO" onClick={() => handleState('LISTO')} />
-                </>
-              )}
-              {(rol === 'CAJA' || rol === 'ADMIN') && !isHistorial && (
-                <>
-                  <SquareButton colorTheme={softColors.caramelo} subtitle="Alertar a Cocina" title="PENDIENTE" onClick={() => handleState('PENDIENTE')} />
-                  <SquareButton colorTheme={softColors.verde} subtitle="Forzar estado" title="LISTO" onClick={() => handleState('LISTO')} />
-                  {isEnvio && <SquareButton colorTheme={softColors.azul} subtitle="Enviar a" title="RUTA" disabled={!isListo} onClick={() => handleState('EN_CAMINO')} />}
-                  <SquareButton colorTheme={softColors.verde} subtitle={isListo ? "Cobrar y" : "Esperando a Cocina"} title="ENTREGAR" disabled={!isListo} onClick={() => setComprobante('BOLETA')} />
-                </>
-              )}
-            </div>
+            {isHistorial ? (
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ display: 'inline-block', padding: '5px 14px', borderRadius: '999px', fontSize: '12px', fontWeight: 800, letterSpacing: '0.4px', marginBottom: '16px', backgroundColor: pedido.estado === 'ENTREGADO' ? softColors.verde.bg : softColors.rojo.bg, color: pedido.estado === 'ENTREGADO' ? softColors.verde.text : softColors.rojo.text, border: `1px solid ${pedido.estado === 'ENTREGADO' ? softColors.verde.border : softColors.rojo.border}` }}>
+                  {pedido.estado.replace('_', ' ')}
+                </div>
 
-            {(rol === 'CAJA' || rol === 'ADMIN' || rol === 'SALA') && !isHistorial && (
-              <button onClick={() => handleState('CANCELADO')} style={{ width: '100%', padding: '12px', borderRadius: '12px', backgroundColor: 'transparent', border: `1.5px dashed ${softColors.rojo.border}`, color: softColors.rojo.text, fontWeight: 'bold', cursor: 'pointer', marginBottom: '15px' }}>
-                Cancelar Pedido
-              </button>
-            )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px', color: COLORS.chocolate, borderTop: `1px solid ${COLORS.vainilla}`, paddingTop: '14px' }}>
+                  <div><strong style={{ color: COLORS.moca, fontWeight: 700 }}>Atendido por:</strong> {pedido.personalServicio}</div>
+                  {pedido.telefono && <div><strong style={{ color: COLORS.moca, fontWeight: 700 }}>Teléfono:</strong> {pedido.telefono}</div>}
+                  {isEnvio && pedido.direccionEntrega && <div><strong style={{ color: COLORS.moca, fontWeight: 700 }}>Dirección:</strong> {pedido.direccionEntrega}{pedido.distrito ? ` (${pedido.distrito})` : ''}</div>}
+                  <div><strong style={{ color: COLORS.moca, fontWeight: 700 }}>Productos:</strong> {pedido.producto}</div>
+                  <div><strong style={{ color: COLORS.moca, fontWeight: 700 }}>Cantidad total:</strong> {pedido.cantidad}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800 }}>Total: S/ {pedido.precio.toFixed(2)}</div>
+                  <div style={{ fontSize: '12px', color: COLORS.moca }}>Registrado: {new Date(pedido.fechaRegistro).toLocaleString('es-PE')}</div>
+                </div>
 
-            {canEdit && (
-              <div style={{ borderTop: `1px solid ${COLORS.vainilla}`, paddingTop: '15px' }}>
-                <button onClick={onOpenEdit} style={{ ...webStyles.editPriceBtn, width: '100%', padding: '14px', fontSize: '14px', backgroundColor: COLORS.blanco, border: `1px solid ${COLORS.vainilla}` }}>
-                  ✏️ Editar detalles del pedido
-                </button>
+                {rol === 'ADMIN' && (
+                  <div style={{ borderTop: `1px solid ${COLORS.vainilla}`, marginTop: '18px', paddingTop: '14px' }}>
+                    <button
+                      onClick={() => {
+                        const nombreRef = pedido.clienteNombre || `Mesa ${pedido.numeroMesa}`;
+                        if (window.confirm(`Este es un registro del HISTORIAL (venta ya cerrada de "${nombreRef}"). Eliminarlo borra la venta de forma permanente y afectará el cierre de caja. ¿Confirmas que deseas eliminarlo?`)) {
+                          onDelete?.(pedido.id);
+                          onClose();
+                        }
+                      }}
+                      style={{ width: '100%', padding: '12px', borderRadius: '10px', backgroundColor: 'transparent', border: `1.5px dashed ${softColors.rojo.border}`, color: softColors.rojo.text, fontWeight: 700, cursor: 'pointer', fontSize: '13px' }}
+                    >
+                      Eliminar registro (Admin)
+                    </button>
+                  </div>
+                )}
               </div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                  {rol === 'SALA' && (
+                    <>
+                      <SquareButton colorTheme={softColors.caramelo} subtitle="Alertar a Cocina" title="PENDIENTE" onClick={() => handleState('PENDIENTE')} />
+                      <SquareButton colorTheme={softColors.verde} subtitle={isListo ? "Finalizar y" : "Esperando a Cocina"} title="ENTREGAR" disabled={!isListo} onClick={() => setComprobante('BOLETA')} />
+                    </>
+                  )}
+                  {rol === 'COCINA' && (
+                    <>
+                      <SquareButton colorTheme={softColors.fresa} subtitle="Marcar" title="EN PREPARACIÓN" onClick={() => handleState('EN_PREPARACION')} />
+                      <SquareButton colorTheme={softColors.verde} subtitle="Marcar como" title="LISTO" onClick={() => handleState('LISTO')} />
+                    </>
+                  )}
+                  {(rol === 'CAJA' || rol === 'ADMIN') && (
+                    <>
+                      <SquareButton colorTheme={softColors.caramelo} subtitle="Alertar a Cocina" title="PENDIENTE" onClick={() => handleState('PENDIENTE')} />
+                      <SquareButton colorTheme={softColors.verde} subtitle="Forzar estado" title="LISTO" onClick={() => handleForzar('LISTO', '¿Forzar este pedido como LISTO sin pasar por cocina?')} />
+                      {isEnvio && <SquareButton colorTheme={softColors.azul} subtitle="Enviar a" title="RUTA" disabled={!isListo} onClick={() => handleForzar('EN_CAMINO', '¿Confirmas despachar este pedido a reparto ahora?')} />}
+                      <SquareButton colorTheme={softColors.verde} subtitle={isListo ? "Cobrar y" : "Esperando a Cocina"} title="ENTREGAR" disabled={!isListo} onClick={() => setComprobante('BOLETA')} />
+                    </>
+                  )}
+                </div>
+
+                {(rol === 'CAJA' || rol === 'ADMIN' || rol === 'SALA') && (
+                  <button onClick={handleCancelar} style={{ width: '100%', padding: '12px', borderRadius: '12px', backgroundColor: 'transparent', border: `1.5px dashed ${softColors.rojo.border}`, color: softColors.rojo.text, fontWeight: 'bold', cursor: 'pointer', marginBottom: '15px' }}>
+                    Cancelar Pedido
+                  </button>
+                )}
+
+                {canEdit && (
+                  <div style={{ borderTop: `1px solid ${COLORS.vainilla}`, paddingTop: '15px' }}>
+                    <button onClick={onOpenEdit} style={{ ...webStyles.editPriceBtn, width: '100%', padding: '14px', fontSize: '14px', backgroundColor: COLORS.blanco, border: `1px solid ${COLORS.vainilla}` }}>
+                      Editar detalles del pedido
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </>
         ) : !showTicket ? (
@@ -132,6 +186,8 @@ export function QuickStatusModal({ pedido, onClose, onUpdateState, onOpenEdit }:
               </h3>
               <p style={{ margin: '2px 0' }}><strong>CLIENTE:</strong> {pedido.clienteNombre || 'CLIENTE VARIOS'}</p>
               <p style={{ margin: '2px 0' }}><strong>DOC:</strong> {docIdentidad || 'S/N'}</p>
+              <p style={{ margin: '2px 0' }}><strong>ATENCIÓN:</strong> {pedido.tipoAtencion === 'MESA' ? `Mesa ${pedido.numeroMesa}` : pedido.tipoAtencion.replace('_', ' ')}</p>
+              <p style={{ margin: '2px 0' }}><strong>ATENDIDO POR:</strong> {pedido.personalServicio}</p>
               <p style={{ margin: '2px 0' }}><strong>FECHA:</strong> {new Date().toLocaleString('es-PE')}</p>
               
               <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', margin: '10px 0', padding: '5px 0' }}>

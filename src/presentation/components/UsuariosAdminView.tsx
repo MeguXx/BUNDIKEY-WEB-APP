@@ -13,10 +13,14 @@ export const UsuariosAdminView: React.FC = () => {
   }, []);
 
   const handleToggleActivo = async (u: UsuarioDB) => {
+    const accion = u.activo ? 'DESACTIVAR' : 'APROBAR';
+    if (!window.confirm(`¿Confirmas ${accion} el acceso de "${u.nombre}" (${u.correo})?`)) return;
     await actualizarAccesoUsuario(u.uid, u.rol, !u.activo);
   };
 
   const handleChangeRol = async (u: UsuarioDB, nuevoRol: RolUsuario) => {
+    if (nuevoRol === u.rol) return;
+    if (!window.confirm(`¿Confirmas cambiar el rol de "${u.nombre}" de ${u.rol} a ${nuevoRol}? Esto cambia lo que puede ver y hacer en el sistema.`)) return;
     await actualizarAccesoUsuario(u.uid, nuevoRol, u.activo);
   };
 

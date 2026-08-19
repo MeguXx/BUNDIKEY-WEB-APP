@@ -20,10 +20,10 @@ export const TrackingModal: React.FC<Props> = ({ pedido, deliveryState, onClose 
 
         <div style={webStyles.statusBox}>
           {deliveryState.status === 'YENDO'
-            ? '🛵 En camino a entregar pedido...'
+            ? 'En camino a entregar pedido...'
             : deliveryState.status === 'ENTREGANDO'
-            ? '📦 En la puerta entregando...'
-            : '🔁 Pedido finalizado. Volviendo a tienda...'}
+            ? 'En la puerta entregando...'
+            : 'Pedido finalizado. Volviendo a tienda...'}
         </div>
 
         <div style={webStyles.gpsTrackLine}>

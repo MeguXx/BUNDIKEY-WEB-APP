@@ -28,7 +28,7 @@ export const ChatPanel: React.FC<{ dbUser: UsuarioDB; onClose: () => void }> = (
   return (
     <div style={webStyles.chatPanel} className="bk-modal-enter">
       <div style={webStyles.chatHeader}>
-        <span>💬 Comunicación Interna</span>
+        <span style={{ fontSize: '15px', fontWeight: 800 }}>Comunicación Interna</span>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
       </div>
       <div style={webStyles.chatBody} ref={scrollRef}>

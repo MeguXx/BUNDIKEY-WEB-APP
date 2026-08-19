@@ -54,18 +54,29 @@ function Dashboard() {
       const listos = pedidos.filter(p => p.estado === 'LISTO' && prevPedidosRef.current.find(prev => prev.id === p.id && prev.estado !== 'LISTO'));
       
       if (nuevos.length > 0 && (dbUser.rol === 'COCINA' || dbUser.rol === 'ADMIN')) {
-        setToast({ titulo: '👨‍🍳 Nueva Orden', msg: 'Ha ingresado un nuevo pedido a cocina.' });
+        setToast({ titulo: 'Nueva Orden', msg: 'Ha ingresado un nuevo pedido a cocina.' });
       }
       if (listos.length > 0 && (dbUser.rol === 'SALA' || dbUser.rol === 'CAJA' || dbUser.rol === 'ADMIN')) {
         const pListo = listos[0];
         if (pListo.personalServicio === dbUser.nombre || dbUser.rol === 'ADMIN' || dbUser.rol === 'CAJA') {
-          setToast({ titulo: '✅ Pedido Listo', msg: `El pedido de ${pListo.clienteNombre || 'Mesa '+pListo.numeroMesa} está listo para recoger.` });
+          setToast({ titulo: 'Pedido Listo', msg: `El pedido de ${pListo.clienteNombre || 'Mesa '+pListo.numeroMesa} está listo para recoger.` });
         }
       }
-      if (toast) setTimeout(() => setToast(null), 6000);
     }
     prevPedidosRef.current = pedidos;
   }, [pedidos, dbUser]);
+
+  // Auto-cierre del toast: separado del efecto de arriba a propósito.
+  // Antes, el setTimeout vivía dentro del efecto de [pedidos, dbUser] y leía
+  // el valor de "toast" ANTES de que el setToast() de esa misma pasada surtiera
+  // efecto (closure obsoleto de React), así que casi nunca se programaba el cierre
+  // y las alertas se quedaban pegadas en pantalla. Este efecto reacciona al toast
+  // real y siempre agenda (y limpia) su propio temporizador.
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   useEffect(() => {
     if (dbUser?.rol === 'ADMIN') {
@@ -73,7 +84,7 @@ function Dashboard() {
         setUsuarios(users);
         if (prevUsuariosRef.current.length > 0) {
           const nuevosPendientes = users.filter(u => u.rol === 'PENDIENTE' && !prevUsuariosRef.current.find(prev => prev.uid === u.uid));
-          if (nuevosPendientes.length > 0) setToast({ titulo: '👤 Nuevo Registro', msg: `${nuevosPendientes[0].nombre} solicita acceso.` });
+          if (nuevosPendientes.length > 0) setToast({ titulo: 'Nuevo Registro', msg: `${nuevosPendientes[0].nombre} solicita acceso.` });
         }
         prevUsuariosRef.current = users;
       });
@@ -114,11 +125,18 @@ function Dashboard() {
     <div style={webStyles.webLayout}>
       {toast && (
         <div style={webStyles.toast}>
-          <span style={{fontSize: '24px'}}>{toast.titulo.split(' ')[0]}</span>
-          <div>
-            <div style={{fontSize: '14px', fontWeight: '900'}}>{toast.titulo.substring(3)}</div>
-            <div style={{fontSize: '12px', fontWeight: 'normal'}}>{toast.msg}</div>
+          <div style={{flex: 1}}>
+            <div style={{fontSize: '16px', fontWeight: 800, marginBottom: '4px'}}>{toast.titulo}</div>
+            <div style={{fontSize: '13px', fontWeight: 400, opacity: 0.9, lineHeight: 1.4}}>{toast.msg}</div>
           </div>
+          <button
+            className="bk-btn"
+            onClick={() => setToast(null)}
+            aria-label="Cerrar aviso"
+            style={{ background: 'rgba(255,255,255,0.12)', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 900, fontSize: '14px', lineHeight: 1, width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -144,7 +162,7 @@ function Dashboard() {
 
       {showChat && <ChatPanel dbUser={dbUser} onClose={() => setShowChat(false)} />}
       {showCierre && <CierreCajaModal pedidos={pedidos} onClose={() => setShowCierre(false)} />}
-      {showQuickStatus && editingPedido && <QuickStatusModal pedido={editingPedido} onClose={() => setShowQuickStatus(false)} onUpdateState={cambiarEstado} onOpenEdit={() => { setShowQuickStatus(false); setShowPedidoModal(true); }} />}
+      {showQuickStatus && editingPedido && <QuickStatusModal pedido={editingPedido} onClose={() => setShowQuickStatus(false)} onUpdateState={cambiarEstado} onOpenEdit={() => { setShowQuickStatus(false); setShowPedidoModal(true); }} onDelete={eliminarPedido} />}
       {showPedidoModal && <PedidoFormModal pedido={editingPedido} products={products} onClose={() => setShowPedidoModal(false)} onDelete={(id) => { eliminarPedido(id); setShowPedidoModal(false); }} />}
       {trackingPedido && activeDeliveries[trackingPedido.id] && <TrackingModal pedido={trackingPedido} deliveryState={activeDeliveries[trackingPedido.id]} onClose={() => setTrackingPedido(null)} />}
       {showProfileModal && <ProfileModal user={user} onClose={() => setShowProfileModal(false)} />}

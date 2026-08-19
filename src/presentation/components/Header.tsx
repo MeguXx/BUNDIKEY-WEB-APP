@@ -31,18 +31,18 @@ export const Header: React.FC<Props> = ({ dbUser, activeTab, pendientesCount, on
         </span>
         
         {isSubView && (
-          <button className="bk-btn" onClick={() => onNavigate('SALA')} style={{ ...webStyles.headerNavBtn, backgroundColor: COLORS.caramelo, color: COLORS.chocolate }}>
-            🏠 Panel Principal
+          <button className="bk-btn" onClick={() => onNavigate('SALA')} style={{ ...webStyles.headerNavBtn, backgroundColor: COLORS.caramelo, color: COLORS.chocolate, fontSize: '13px' }}>
+            Panel Principal
           </button>
         )}
 
-        <button className="bk-btn" onClick={onToggleChat} style={{ ...webStyles.headerNavBtn, backgroundColor: COLORS.azul }}>
-          💬 Chat
+        <button className="bk-btn" onClick={onToggleChat} style={{ ...webStyles.headerNavBtn, backgroundColor: COLORS.azul, fontSize: '13px' }}>
+          Chat
         </button>
 
         {(dbUser.rol === 'CAJA' || dbUser.rol === 'ADMIN') && (
-          <button className="bk-btn" onClick={onOpenCierre} style={{ ...webStyles.headerNavBtn, backgroundColor: COLORS.verde }}>
-            💰 Cierre Caja
+          <button className="bk-btn" onClick={onOpenCierre} style={{ ...webStyles.headerNavBtn, backgroundColor: COLORS.verde, fontSize: '13px' }}>
+            Cierre Caja
           </button>
         )}
 
