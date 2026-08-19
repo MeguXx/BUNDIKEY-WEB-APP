@@ -9,8 +9,9 @@ sincronizado en tiempo real con el mismo backend.
 npm install
 npm run dev
 
+```
 
-## Arquitectura
+##  Arquitectura
 
 ```
 src/
