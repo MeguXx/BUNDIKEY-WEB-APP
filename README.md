@@ -1,13 +1,16 @@
 # BundiKey Web — Panel de Mostrador
 
-Panel web para caja/mostrador de la pastelería BundiKey, construido en **React + TypeScript + SQL SERVER**,
+Panel web para caja/mostrador de la pastelería cafetería BundiKey del curso de Idat EFSRT 3 Proyecto de Aplicación Empresarial, construido en base de **React + TypeScript + SQL SERVER**,
 sincronizado en tiempo real con el mismo backend.
 
-Este proyecto reemplaza la versión inicial (generada en un único `App.tsx` de ~1000 líneas) por una
-**arquitectura por capas**
-(`domain/`, `infrastructure/`, `presentation/`).
+## Cómo correr
 
-## 📁 Arquitectura
+```bash
+npm install
+npm run dev
+
+
+## Arquitectura
 
 ```
 src/
@@ -45,11 +48,6 @@ src/
 └── main.tsx                      # Punto de entrada de React
 ```
 
-## ▶️ Cómo correr
-
-```bash
-npm install
-npm run dev
 ```
 
 Antes de iniciar, coloca tu logo en `src/assets/logo-bundikey.png`
